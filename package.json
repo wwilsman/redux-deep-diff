@@ -29,7 +29,6 @@
     "babel-preset-env": "^1.6.0",
     "babel-preset-stage-2": "^6.24.1",
     "chai": "^4.1.2",
-    "clone-deep": "^1.0.0",
     "cross-env": "^5.0.5",
     "dirty-chai": "^2.0.1",
     "eslint": "^4.6.1",
@@ -45,6 +44,7 @@
     "webpack": "^3.5.6"
   },
   "dependencies": {
+    "clone-deep": "^1.0.0",
     "deep-diff": "^0.3.8"
   }
 }
