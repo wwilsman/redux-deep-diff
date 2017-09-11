@@ -1,0 +1,50 @@
+{
+  "name": "redux-deep-diff",
+  "version": "0.1.0",
+  "description": "Higher order reducer to deep diff redux states",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wwilsman/redux-deep-diff.git"
+  },
+  "author": "Wil Wilsman <hello@wilwilsman.com>",
+  "license": "MIT",
+  "scripts": {
+    "prebuild": "yarn clean",
+    "build": "npm-run-all --parallel build:*",
+    "build:commonjs": "cross-env BABEL_ENV=commonjs babel src --out-dir lib",
+    "build:es": "cross-env BABEL_ENV=es babel src --out-dir es",
+    "build:umd": "cross-env BABEL_ENV=commonjs NODE_ENV=development webpack",
+    "build:umd:min": "cross-env BABEL_ENV=commonjs NODE_ENV=production webpack",
+    "clean": "rimraf lib dist es",
+    "lint": "eslint webpack.config.babel.js src test",
+    "prepublish": "yarn lint && yarn test && yarn clean && yarn build",
+    "test": "cross-env NODE_ENV=test mocha --compilers js:babel-core/register"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-eslint": "^7.2.3",
+    "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.0",
+    "babel-preset-stage-2": "^6.24.1",
+    "chai": "^4.1.2",
+    "clone-deep": "^1.0.0",
+    "cross-env": "^5.0.5",
+    "dirty-chai": "^2.0.1",
+    "eslint": "^4.6.1",
+    "eslint-config-standard": "^10.2.1",
+    "eslint-plugin-import": "^2.7.0",
+    "eslint-plugin-node": "^5.1.1",
+    "eslint-plugin-promise": "^3.5.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "mocha": "^3.5.0",
+    "npm-run-all": "^4.1.1",
+    "redux": "^3.7.2",
+    "rimraf": "^2.6.1",
+    "webpack": "^3.5.6"
+  },
+  "dependencies": {
+    "deep-diff": "^0.3.8"
+  }
+}
