@@ -62,12 +62,12 @@ describe('Redux Deep Diff: reducer', function() {
 
     // 3 edits, 1 array, 1 delete, 1 addition
     expect(this.state.diff.prev[0]).to.have.lengthOf(6);
-    expect(this.state.diff.prev[0][0]).to.beDiff('E', ['string'], 'hello', 'world');
-    expect(this.state.diff.prev[0][1]).to.beDiff('E', ['number'], 1000, 500);
-    expect(this.state.diff.prev[0][2]).to.beDiff('E', ['boolean'], true, false);
-    expect(this.state.diff.prev[0][3]).to.beDiff('A', ['array'], 3, { kind: 'N', rhs: 'd' });
-    expect(this.state.diff.prev[0][4]).to.beDiff('D', ['object', 'c'], 2);
-    expect(this.state.diff.prev[0][5]).to.beDiff('N', ['object', 'C'], undefined, 2);
+    expect(this.state.diff.prev[0][0]).to.be.diff('E', ['string'], 'hello', 'world');
+    expect(this.state.diff.prev[0][1]).to.be.diff('E', ['number'], 1000, 500);
+    expect(this.state.diff.prev[0][2]).to.be.diff('E', ['boolean'], true, false);
+    expect(this.state.diff.prev[0][3]).to.be.diff('A', ['array'], 3, { kind: 'N', rhs: 'd' });
+    expect(this.state.diff.prev[0][4]).to.be.diff('D', ['object', 'c'], 2);
+    expect(this.state.diff.prev[0][5]).to.be.diff('N', ['object', 'C'], undefined, 2);
   });
 
   it('should show previous diffs when additional state changes are made', function() {
@@ -80,11 +80,11 @@ describe('Redux Deep Diff: reducer', function() {
 
     expect(this.state.diff.prev).to.have.lengthOf(3);
     expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-    expect(this.state.diff.prev[0][0]).to.beDiff('E', ['boolean'], true, false);
+    expect(this.state.diff.prev[0][0]).to.be.diff('E', ['boolean'], true, false);
     expect(this.state.diff.prev[1]).to.have.lengthOf(1);
-    expect(this.state.diff.prev[1][0]).to.beDiff('E', ['number'], 1000, 9999);
+    expect(this.state.diff.prev[1][0]).to.be.diff('E', ['number'], 1000, 9999);
     expect(this.state.diff.prev[2]).to.have.lengthOf(1);
-    expect(this.state.diff.prev[2][0]).to.beDiff('E', ['string'], 'hello', 'cat');
+    expect(this.state.diff.prev[2][0]).to.be.diff('E', ['string'], 'hello', 'cat');
   });
 
   it('should clear the next diffs when a new diff occurs', function() {
@@ -98,7 +98,7 @@ describe('Redux Deep Diff: reducer', function() {
     expect(this.state.diff.next).to.have.lengthOf(1);
 
     expect(this.state.diff.next[0]).to.have.lengthOf(1);
-    expect(this.state.diff.next[0][0]).to.beDiff('E', ['array', 2], 'c', 'd');
+    expect(this.state.diff.next[0][0]).to.be.diff('E', ['array', 2], 'c', 'd');
 
     this.store.dispatch(change({ string: 'clarice' }));
     expect(this.state.string).to.equal('clarice');
@@ -106,7 +106,7 @@ describe('Redux Deep Diff: reducer', function() {
     expect(this.state.diff.next).to.have.lengthOf(0);
 
     expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-    expect(this.state.diff.prev[0][0]).to.beDiff('E', ['string'], 'hello', 'clarice');
+    expect(this.state.diff.prev[0][0]).to.be.diff('E', ['string'], 'hello', 'clarice');
   });
 
   it('should not create a diff when no changes are are made', function() {
@@ -126,7 +126,7 @@ describe('Redux Deep Diff: reducer', function() {
 
       expect(this.state.diff.next).to.have.lengthOf(1);
       expect(this.state.diff.next[0]).to.have.lengthOf(1);
-      expect(this.state.diff.next[0][0]).to.beDiff('E', ['string'], 'hello', 'doge');
+      expect(this.state.diff.next[0][0]).to.be.diff('E', ['string'], 'hello', 'doge');
     });
 
     it('should not change the state when undoing nothing', function() {
@@ -153,7 +153,7 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.next).to.have.lengthOf(0);
 
       expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-      expect(this.state.diff.prev[0][0]).to.beDiff('E', ['number'], 1000, 1);
+      expect(this.state.diff.prev[0][0]).to.be.diff('E', ['number'], 1000, 1);
     });
 
     it('should not change the state when redoing nothing', function() {
@@ -181,12 +181,12 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.next).to.have.lengthOf(2);
 
       expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-      expect(this.state.diff.prev[0][0]).to.beDiff('E', ['boolean'], true, false);
+      expect(this.state.diff.prev[0][0]).to.be.diff('E', ['boolean'], true, false);
 
       expect(this.state.diff.next[0]).to.have.lengthOf(1);
-      expect(this.state.diff.next[0][0]).to.beDiff('E', ['string'], 'hello', '$#@%&*!');
+      expect(this.state.diff.next[0][0]).to.be.diff('E', ['string'], 'hello', '$#@%&*!');
       expect(this.state.diff.next[1]).to.have.lengthOf(1);
-      expect(this.state.diff.next[1][0]).to.beDiff('E', ['number'], 1000, 88);
+      expect(this.state.diff.next[1][0]).to.be.diff('E', ['number'], 1000, 88);
     });
 
     it('should redo all undone changes up to a specified index', function() {
@@ -213,12 +213,12 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.next).to.have.lengthOf(1);
 
       expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-      expect(this.state.diff.prev[0][0]).to.beDiff('E', ['string'], 'hello', '$#@%&*!');
+      expect(this.state.diff.prev[0][0]).to.be.diff('E', ['string'], 'hello', '$#@%&*!');
       expect(this.state.diff.prev[1]).to.have.lengthOf(1);
-      expect(this.state.diff.prev[1][0]).to.beDiff('E', ['boolean'], true, false);
+      expect(this.state.diff.prev[1][0]).to.be.diff('E', ['boolean'], true, false);
 
       expect(this.state.diff.next[0]).to.have.lengthOf(1);
-      expect(this.state.diff.next[0][0]).to.beDiff('E', ['number'], 1000, 88);
+      expect(this.state.diff.next[0][0]).to.be.diff('E', ['number'], 1000, 88);
     });
 
     it('should not undo further than the history', function() {
@@ -232,7 +232,7 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.next).to.have.lengthOf(1);
 
       expect(this.state.diff.next[0]).to.have.lengthOf(1);
-      expect(this.state.diff.next[0][0]).to.beDiff('E', ['number'], 1000, -1);
+      expect(this.state.diff.next[0][0]).to.be.diff('E', ['number'], 1000, -1);
     });
 
     it('should not redo further than the history', function() {
@@ -251,7 +251,7 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.next).to.have.lengthOf(0);
 
       expect(this.state.diff.prev[0]).to.have.lengthOf(1);
-      expect(this.state.diff.prev[0][0]).to.beDiff('E', ['number'], 1000, -1);
+      expect(this.state.diff.prev[0][0]).to.be.diff('E', ['number'], 1000, -1);
     });
   });
 });

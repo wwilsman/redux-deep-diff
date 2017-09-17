@@ -1,7 +1,7 @@
 export const chaiDeepDiff = (chai, utils) => {
   const { Assertion } = chai;
 
-  Assertion.addMethod('beDiff', function(kind, path, lhs, rhs) {
+  Assertion.addMethod('diff', function(kind, path, lhs, rhs) {
     const obj = this._obj;
 
     this.assert(

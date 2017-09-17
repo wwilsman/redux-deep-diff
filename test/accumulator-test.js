@@ -20,8 +20,8 @@ describe('Redux Deep Diff: accumulator', function() {
 
       expect(accum.diffs).to.equal(diffs);
       expect(diffs).to.have.lengthOf(2);
-      expect(diffs[0]).to.beDiff('E', ['string'], 'hello', 'world');
-      expect(diffs[1]).to.beDiff('E', ['number'], 0, 1);
+      expect(diffs[0]).to.be.diff('E', ['string'], 'hello', 'world');
+      expect(diffs[1]).to.be.diff('E', ['number'], 0, 1);
     });
 
     it('should accumulate new diffs each time', function() {
@@ -31,17 +31,17 @@ describe('Redux Deep Diff: accumulator', function() {
 
       expect(accum.diffs).to.equal(diffs);
       expect(diffs).to.have.lengthOf(2);
-      expect(diffs[0]).to.beDiff('E', ['string'], 'hello', 'world');
-      expect(diffs[1]).to.beDiff('E', ['number'], 0, 1);
+      expect(diffs[0]).to.be.diff('E', ['string'], 'hello', 'world');
+      expect(diffs[1]).to.be.diff('E', ['number'], 0, 1);
 
       const other = { string: 'people', boolean: true };
       const otherDiffs = accum.diff(lhs, other);
 
       expect(accum.diffs).to.equal(otherDiffs);
       expect(otherDiffs).to.have.lengthOf(3);
-      expect(otherDiffs[0]).to.beDiff('E', ['string'], 'hello', 'people');
-      expect(otherDiffs[1]).to.beDiff('D', ['number'], 0, undefined);
-      expect(otherDiffs[2]).to.beDiff('N', ['boolean'], undefined, true);
+      expect(otherDiffs[0]).to.be.diff('E', ['string'], 'hello', 'people');
+      expect(otherDiffs[1]).to.be.diff('D', ['number'], 0, undefined);
+      expect(otherDiffs[2]).to.be.diff('N', ['boolean'], undefined, true);
     });
   });
 
@@ -56,7 +56,7 @@ describe('Redux Deep Diff: accumulator', function() {
       const diffs = accum.diff(lhs, rhs);
 
       expect(diffs).to.have.lengthOf(1);
-      expect(diffs[0]).to.beDiff('E', ['string'], 'hello', 'world');
+      expect(diffs[0]).to.be.diff('E', ['string'], 'hello', 'world');
     });
   });
 
@@ -71,7 +71,7 @@ describe('Redux Deep Diff: accumulator', function() {
       const diffs = accum.diff(lhs, rhs);
 
       expect(diffs).to.have.lengthOf(1);
-      expect(diffs[0]).to.beDiff('E', ['nested'], lhs.nested, rhs.nested);
+      expect(diffs[0]).to.be.diff('E', ['nested'], lhs.nested, rhs.nested);
     });
   });
 });
