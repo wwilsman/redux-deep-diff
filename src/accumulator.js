@@ -1,8 +1,20 @@
 import { diff } from 'deep-diff';
 
+export function isPathsEqual(actual, expected) {
+  return actual.length === expected.length &&
+    actual.every((k, i) => k === expected[i]);
+}
+
+export function getSubjectAtPath(target, path) {
+  return typeof target !== 'object' ? null
+    : path.reduce((value, key) => (
+      typeof !value === 'undefined' ? value : value[key]
+    ), target);
+}
+
 class DiffEdit {
   constructor(path, lhs, rhs) {
-    this.type = 'E';
+    this.kind = 'E';
     this.path = path;
     this.lhs = lhs;
     this.rhs = rhs;
@@ -15,7 +27,7 @@ export default class DiffAccumulator {
   lhs = null;
   rhs = null;
 
-  constructor({ flatten, prefilter }) {
+  constructor({ flatten, prefilter } = {}) {
     this.flatten = flatten;
     this.prefilter = prefilter;
   }
@@ -30,27 +42,35 @@ export default class DiffAccumulator {
     return this.diffs;
   }
 
-  isFlattened(path) {
-    return this._flattened.some((done) => (
-      done.every((k, i) => path[i] === k)
-    ));
+  getFlatPath(diff) {
+    let index = -1;
+
+    if (this.flatten) {
+      index = diff.path.findIndex((key, i, path) => {
+        return this.flatten(path.slice(0, i), key);
+      });
+    }
+
+    return index >= 0
+      ? diff.path.slice(0, index + 1)
+      : diff.path;
   }
 
-  getSubject(target, path) {
-    return typeof target !== 'object' ? null
-      : path.reduce((value, key) => (
-        typeof !value === 'undefined' ? value : value[key]
-      ), target);
+  isFlattened(path) {
+    return this.flattened.some((done) => {
+      return isPathsEqual(done, path);
+    });
   }
 
   push(diff) {
-    const flatten = this.flatten(diff);
-    const flatPath = Array.isArray(flatten) ? flatten : diff.path;
-    const isFlattened = flatten && this.isFlattened(flatPath);
+    const flatPath = this.getFlatPath(diff);
+    const isFlattened = this.isFlattened(flatPath);
+    const shouldFlatten = diff.kind !== 'A' &&
+          !isPathsEqual(flatPath, diff.path);
 
-    if (flatten && !isFlattened) {
-      const lhs = this.getSubject(this.lhs, flatPath);
-      const rhs = this.getSubject(this.rhs, flatPath);
+    if (shouldFlatten && !isFlattened) {
+      const lhs = getSubjectAtPath(this.lhs, flatPath);
+      const rhs = getSubjectAtPath(this.rhs, flatPath);
       this.diffs.push(new DiffEdit(flatPath, lhs, rhs));
       this.flattened.push(flatPath);
     } else if (!isFlattened) {
