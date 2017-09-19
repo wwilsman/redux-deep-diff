@@ -41,6 +41,8 @@
     "npm-run-all": "^4.1.1",
     "redux": "^3.7.2",
     "rimraf": "^2.6.1",
+    "sinon": "^3.3.0",
+    "sinon-chai": "^2.13.0",
     "webpack": "^3.5.6"
   },
   "dependencies": {
