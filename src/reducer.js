@@ -1,46 +1,48 @@
+import DiffAccumulator from './accumulator';
+import { UNDO, REDO, JUMP } from './actions';
 import {
   applyChanges,
   applyDiffs,
   revertChanges,
   revertDiffs
 } from './util';
-import {
-  UNDO,
-  REDO,
-  JUMP
-} from './actions';
-import DiffAccumulator from './accumulator';
 
-function addHistory(history, addition) {
+function addToHistory(history, addition) {
   return addition.length === 0 ? history : {
-    prev: [addition, ...history.prev],
+    ...history,
+    prev: [addition, ...history.prev]
+      .slice(0, history.limit || history.prev.length + 1),
     next: []
   };
 }
 
-function undoHistory(history) {
-  return jumpThroughHistory(history, -1);
+function jumpToPrevHistory(history, offset = 1) {
+  offset = Math.min(history.prev.length, offset);
+
+  return {
+    ...history,
+    prev: history.prev.slice(offset),
+    next: [...history.prev.slice(0, offset).reverse(), ...history.next]
+      .slice(0, history.limit || history.next.length + offset)
+  };
 }
 
-function redoHistory(history) {
-  return jumpThroughHistory(history, 1);
+function jumpToNextHistory(history, offset = 1) {
+  offset = Math.min(history.next.length, offset);
+
+  return {
+    ...history,
+    prev: [...history.next.slice(0, offset).reverse(), ...history.prev]
+      .slice(0, history.limit || history.prev.length + offset),
+    next: history.next.slice(offset)
+  };
 }
 
 function jumpThroughHistory(history, index) {
   if (history && index < 0) {
-    index = Math.min(history.prev.length, Math.abs(index));
-
-    return {
-      prev: history.prev.slice(index),
-      next: [...history.prev.slice(0, index).reverse(), ...history.next]
-    };
+    return jumpToPrevHistory(history, Math.abs(index));
   } else if (history && index > 0) {
-    index = Math.min(history.next.length, index);
-
-    return {
-      prev: [...history.next.slice(0, index).reverse(), ...history.prev],
-      next: history.next.slice(index)
-    };
+    return jumpToNextHistory(history, index);
   } else {
     return history;
   }
@@ -56,74 +58,53 @@ function getHistorySlice(history, index) {
   }
 }
 
-function handleHistoryActions(actionHandlers, { key, defaultAction, reducer }) {
-  const { [defaultAction]: defaultHandler } = actionHandlers;
-
-  return (rawState, action) => {
-    let { [action.type]: actionHandler } = actionHandlers;
-    let { [key]: history, ...lhs } = (rawState || {});
-    actionHandler = actionHandler || defaultHandler;
-    lhs = rawState ? lhs : rawState;
-
-    const rhs = reducer(lhs, action);
-    const nextState = { ...(rhs || {}), [key]: history };
-
-    return actionHandler
-      ? actionHandler(history, lhs, rhs, action) || nextState
-      : nextState;
-  };
-}
-
 export default (reducer, config = {}) => {
-  const defaultAction = '@@redux-deep-diff/DEFAULT';
-
-  const {
+  let {
     key = 'diff',
+    limit = 0,
     undoType = UNDO,
     redoType = REDO,
     jumpType = JUMP,
     skipAction = () => false,
-    initialState = { prev: [], next: [] },
+    initialState = { prev: [], next: [], limit },
     ignoreInit = true,
     flatten = () => false,
     prefilter = () => false
   } = config;
 
-  const accum = new DiffAccumulator({ flatten, prefilter });
-  const diff = accum.diff.bind(accum);
+  let accum = new DiffAccumulator({ flatten, prefilter });
+  let diff = accum.diff.bind(accum);
 
-  return handleHistoryActions({
-    [undoType]: (history, lhs) => ({
-      ...revertChanges(lhs, history.prev[0]),
-      [key]: undoHistory(history)
-    }),
+  return (rawState, action) => {
+    let { [key]: history, ...state } = (rawState || {});
+    history = history || initialState;
 
-    [redoType]: (history, lhs) => ({
-      ...applyChanges(lhs, history.next[0]),
-      [key]: redoHistory(history)
-    }),
+    let lhs = rawState && state;
+    let rhs = reducer(lhs, action);
+    let nextState = rhs || {};
+    let changes, diffs;
 
-    [jumpType]: (history, lhs, rhs, { index }) => {
-      const slice = getHistorySlice(history, index);
+    switch (action.type) {
+      case undoType:
+        nextState = revertChanges(lhs, history.prev[0]);
+        return { ...nextState, [key]: jumpToPrevHistory(history) };
 
-      return {
-        ...(index > 0
-          ? applyDiffs(rhs, slice)
-          : revertDiffs(rhs, slice)),
-        [key]: jumpThroughHistory(history, index)
-      };
-    },
+      case redoType:
+        nextState = applyChanges(lhs, history.next[0]);
+        return { ...nextState, [key]: jumpToNextHistory(history) };
 
-    [defaultAction]: (history, lhs, rhs, action) => {
-      const changes = (history || !ignoreInit) ? diff(lhs, rhs) : [];
-      history = history || initialState;
+      case jumpType:
+        diffs = getHistorySlice(history, action.index);
+        nextState = (action.index > 0 ? applyDiffs : revertDiffs)(rhs, diffs);
+        return { ...nextState, [key]: jumpThroughHistory(history, action.index) };
 
-      return skipAction(action) || {
-        ...rhs,
-        [key]: changes.length > 0
-          ? addHistory(history, changes)
-          : history
-      };
+      default:
+        if (skipAction(action)) {
+          return { ...nextState, [key]: history };
+        } else {
+          changes = (rawState || !ignoreInit) ? diff(lhs, rhs) : [];
+          return { ...nextState, [key]: addToHistory(history, changes) };
+        }
     }
-  }, { key, defaultAction, reducer });
+  };
 };
