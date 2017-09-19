@@ -28,9 +28,18 @@ export default class DiffAccumulator {
   rhs = null;
 
   constructor({ flatten, prefilter } = {}) {
-    this.flatten = flatten;
-    this.prefilter = prefilter;
+    this.opts = { flatten, prefilter };
   }
+
+  prefilter = (path, key) => {
+    if (this.isFlattened([...path, key])) {
+      return true;
+    } else if (this.opts.prefilter) {
+      return this.opts.prefilter(path, key);
+    } else {
+      return false;
+    }
+  };
 
   diff(lhs, rhs) {
     this.flattened = [];
@@ -45,9 +54,9 @@ export default class DiffAccumulator {
   getFlatPath(diff) {
     let index = -1;
 
-    if (this.flatten) {
+    if (this.opts.flatten) {
       index = diff.path.findIndex((key, i, path) => {
-        return this.flatten(path.slice(0, i), key);
+        return this.opts.flatten(path.slice(0, i), key);
       });
     }
 
@@ -63,17 +72,15 @@ export default class DiffAccumulator {
   }
 
   push(diff) {
-    const flatPath = this.getFlatPath(diff);
-    const isFlattened = this.isFlattened(flatPath);
-    const shouldFlatten = diff.kind !== 'A' &&
-          !isPathsEqual(flatPath, diff.path);
+    let flatPath = this.getFlatPath(diff);
+    if (this.isFlattened(flatPath)) return;
 
-    if (shouldFlatten && !isFlattened) {
+    if (diff.kind !== 'A' && !isPathsEqual(flatPath, diff.path)) {
       const lhs = getSubjectAtPath(this.lhs, flatPath);
       const rhs = getSubjectAtPath(this.rhs, flatPath);
       this.diffs.push(new DiffEdit(flatPath, lhs, rhs));
       this.flattened.push(flatPath);
-    } else if (!isFlattened) {
+    } else {
       this.diffs.push(diff);
     }
   }
