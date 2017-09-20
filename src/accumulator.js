@@ -1,24 +1,42 @@
 import { diff } from 'deep-diff';
 
-export function isPathsEqual(actual, expected) {
+function isPathsEqual(actual, expected) {
   return actual.length === expected.length &&
     actual.every((k, i) => k === expected[i]);
 }
 
-export function getSubjectAtPath(target, path) {
+function getSubjectAtPath(target, path) {
   return typeof target !== 'object' ? null
     : path.reduce((value, key) => (
       typeof !value === 'undefined' ? value : value[key]
     ), target);
 }
 
-class DiffEdit {
-  constructor(path, lhs, rhs) {
-    this.kind = 'E';
-    this.path = path;
-    this.lhs = lhs;
-    this.rhs = rhs;
+function mergeDiffs(a, b) {
+  let merged = {};
+
+  if (a.lhs !== b.rhs) {
+    if (a.kind === 'A' || b.kind === 'A') {
+      let item = mergeDiffs(
+        a.kind === 'A' ? a.item : { kind: a.kind, lhs: a.lhs },
+        b.kind === 'A' ? b.item : { kind: b.kind, rhs: b.rhs }
+      );
+
+      if (item && item.kind) {
+        merged = a.kind === 'A' ? { ...a, item } : { ...b, item };
+      }
+    } else if (a.kind !== 'D' && b.kind === 'E') {
+      merged = { ...a, rhs: b.rhs };
+    } else if (a.kind === 'D' && b.kind !== 'D') {
+      merged = { kind: 'E', path: a.path, lhs: a.lhs, rhs: b.rhs };
+    } else if (a.kind !== 'D' && b.kind === 'D') {
+      merged = { kind: 'D', path: a.path, lhs: a.lhs };
+    } else {
+      return;
+    }
   }
+
+  return merged;
 }
 
 export default class DiffAccumulator {
@@ -43,12 +61,15 @@ export default class DiffAccumulator {
 
   diff(lhs, rhs) {
     this.flattened = [];
-    this.diffs = [];
     this.lhs = lhs;
     this.rhs = rhs;
 
     diff(lhs, rhs, this.prefilter, this);
     return this.diffs;
+  }
+
+  clear() {
+    this.diffs = [];
   }
 
   getFlatPath(diff) {
@@ -71,6 +92,30 @@ export default class DiffAccumulator {
     });
   }
 
+  addDiff(diff) {
+    let existingIndex = this.diffs.findIndex((d) => {
+      let pathA = diff.kind === 'A' ? [...diff.path, diff.index] : diff.path;
+      let pathB = d.kind === 'A' ? [...d.path, d.index] : d.path;
+      return isPathsEqual(pathA, pathB);
+    });
+
+    if (diff.item) {
+      diff.item = { ...diff.item };
+    }
+
+    if (existingIndex > -1) {
+      let merged = mergeDiffs(this.diffs[existingIndex], diff);
+
+      if (merged && !merged.kind) {
+        this.diffs.splice(existingIndex, 1);
+      } else if (merged) {
+        this.diffs.splice(existingIndex, 1, merged);
+      }
+    } else {
+      this.diffs.push(diff);
+    }
+  }
+
   push(diff) {
     let flatPath = this.getFlatPath(diff);
     if (this.isFlattened(flatPath)) return;
@@ -78,10 +123,10 @@ export default class DiffAccumulator {
     if (diff.kind !== 'A' && !isPathsEqual(flatPath, diff.path)) {
       const lhs = getSubjectAtPath(this.lhs, flatPath);
       const rhs = getSubjectAtPath(this.rhs, flatPath);
-      this.diffs.push(new DiffEdit(flatPath, lhs, rhs));
+      this.addDiff({ kind: 'E', path: flatPath, lhs, rhs });
       this.flattened.push(flatPath);
     } else {
-      this.diffs.push(diff);
+      this.addDiff({ ...diff });
     }
   }
 }

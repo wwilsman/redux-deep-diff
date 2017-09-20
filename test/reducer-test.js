@@ -256,6 +256,30 @@ describe('Redux Deep Diff: reducer', function() {
       expect(this.state.diff.prev[1][0]).to.be.diff('E', ['number'], 1000, -1000);
     });
   });
+
+  describe('when `skipAction` is defined', function() {
+    setupDiffReducer({
+      skipAction: (action) => action.type !== 'DIFF'
+    });
+
+    it('should not diff when the action is skipped', function() {
+      this.setState({ boolean: false });
+      expect(this.state.boolean).to.be.false();
+      expect(this.state.diff.prev).to.have.lengthOf(0);
+    });
+
+    it('should diff previous changes when the action is not skipped', function() {
+      this.setState({ boolean: false });
+      expect(this.state.boolean).to.be.false();
+      expect(this.state.diff.prev).to.have.lengthOf(0);
+
+      this.store.dispatch({ type: 'DIFF' });
+      expect(this.state.diff.prev).to.have.lengthOf(1);
+
+      expect(this.state.diff.prev[0]).to.have.lengthOf(1);
+      expect(this.state.diff.prev[0][0]).to.be.diff('E', ['boolean'], true, false);
+    });
+  });
 });
 
 function setupDiffReducer(config) {

@@ -73,7 +73,6 @@ export default (reducer, config = {}) => {
   } = config;
 
   let accum = new DiffAccumulator({ flatten, prefilter });
-  let diff = accum.diff.bind(accum);
 
   return (rawState, action) => {
     let { [key]: history, ...state } = (rawState || {});
@@ -99,11 +98,13 @@ export default (reducer, config = {}) => {
         return { ...nextState, [key]: jumpThroughHistory(history, action.index) };
 
       default:
-        if (skipAction(action)) {
-          return { ...nextState, [key]: history };
-        } else {
-          changes = (rawState || !ignoreInit) ? diff(lhs, rhs) : [];
+        changes = (rawState || !ignoreInit) ? accum.diff(lhs, rhs) : [];
+
+        if (!skipAction(action)) {
+          accum.clear();
           return { ...nextState, [key]: addToHistory(history, changes) };
+        } else {
+          return { ...nextState, [key]: history };
         }
     }
   };
