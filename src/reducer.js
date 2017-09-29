@@ -1,3 +1,4 @@
+import clone from 'clone-deep';
 import DiffAccumulator from './accumulator';
 import { UNDO, REDO, JUMP } from './actions';
 import {
@@ -48,25 +49,15 @@ function jumpThroughHistory(history, index) {
   }
 }
 
-function getHistorySlice(history, index) {
-  if (index > 0) {
-    return history.next.slice(0, index);
-  } else if (index < 0) {
-    return history.prev.slice(0, Math.abs(index));
-  } else {
-    return [];
-  }
-}
-
 export default (reducer, config = {}) => {
-  let {
+  const {
     key = 'diff',
     limit = 0,
     undoType = UNDO,
     redoType = REDO,
     jumpType = JUMP,
     skipAction = () => false,
-    initialState = { prev: [], next: [], limit },
+    initialState = { prev: [], next: [] },
     ignoreInit = true,
     flatten = () => false,
     prefilter = () => false
@@ -76,7 +67,7 @@ export default (reducer, config = {}) => {
 
   return (rawState, action) => {
     let { [key]: history, ...state } = (rawState || {});
-    history = history || initialState;
+    history = history || { ...initialState, limit };
 
     let lhs = rawState && state;
     let rhs = reducer(lhs, action);
@@ -85,27 +76,36 @@ export default (reducer, config = {}) => {
 
     switch (action.type) {
       case undoType:
-        nextState = revertChanges(lhs, history.prev[0]);
-        return { ...nextState, [key]: jumpToPrevHistory(history) };
+        nextState = revertChanges(clone(lhs), history.prev[0]);
+        history = jumpToPrevHistory(history);
+        return { ...nextState, [key]: history };
 
       case redoType:
-        nextState = applyChanges(lhs, history.next[0]);
-        return { ...nextState, [key]: jumpToNextHistory(history) };
+        nextState = applyChanges(clone(lhs), history.next[0]);
+        history = jumpToNextHistory(history);
+        return { ...nextState, [key]: history };
 
       case jumpType:
-        diffs = getHistorySlice(history, action.index);
-        nextState = (action.index > 0 ? applyDiffs : revertDiffs)(rhs, diffs);
-        return { ...nextState, [key]: jumpThroughHistory(history, action.index) };
+        if (action.index > 0) {
+          diffs = history.next.slice(0, Math.abs(action.index));
+          nextState = applyDiffs(clone(lhs), diffs);
+        } else if (action.index < 0) {
+          diffs = history.prev.slice(0, Math.abs(action.index));
+          nextState = revertDiffs(clone(lhs), diffs);
+        }
+
+        history = jumpThroughHistory(history, action.index);
+        return { ...nextState, [key]: history };
 
       default:
         changes = (rawState || !ignoreInit) ? accum.diff(lhs, rhs) : [];
 
         if (!skipAction(action)) {
+          history = addToHistory(history, changes);
           accum.clear();
-          return { ...nextState, [key]: addToHistory(history, changes) };
-        } else {
-          return { ...nextState, [key]: history };
         }
+
+        return { ...nextState, [key]: history };
     }
   };
 };
