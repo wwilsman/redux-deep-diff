@@ -120,9 +120,7 @@ describe('Redux Deep Diff: deducer', function() {
     });
   });
 
-  describe('with misconfigured options', function() {
-    const message = (part) => new RegExp(`^(Redux Deep Diff:).*(${part}).*`);
-
+  describe('misconfigured options', function() {
     beforeEach(function() {
       this.sinon = sinon.sandbox.create();
       this.sinon.stub(console, 'warn');
@@ -138,7 +136,7 @@ describe('Redux Deep Diff: deducer', function() {
       });
 
       it('should throw an error about the key', function() {
-        expect(() => this.deduce(this.state)).to.throw(message('"_diff_"'));
+        expect(() => this.deduce(this.state)).to.throw('"_diff_"');
       });
     });
 
@@ -155,9 +153,7 @@ describe('Redux Deep Diff: deducer', function() {
 
       it('should warn about combining them', function() {
         expect(console.warn).to.have.callCount(3)
-          .and.calledWith(sinon.match(message('`index` and `range`')))
-          .and.calledWith(sinon.match(message('`index` and `limit`')))
-          .and.calledWith(sinon.match(message('`index`, `range` and `limit`')));
+          .and.calledWith(sinon.match('index, range, or limit'));
       });
 
       it('should prioritize `index`', function() {
@@ -189,7 +185,7 @@ describe('Redux Deep Diff: deducer', function() {
 
       it('should warn about combining them', function() {
         expect(console.warn).to.have.callCount(1)
-          .calledWith(sinon.match(message('`range` and `limit`')));
+          .calledWith(sinon.match('index, range, or limit'));
       });
 
       it('should prioritize `range`', function() {

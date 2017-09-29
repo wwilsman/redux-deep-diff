@@ -10,9 +10,7 @@ export default function createDeducer(selector, config = {}) {
   } = config;
 
   if ((index !== false && (range || limit)) || (range && limit)) {
-    const opts = ['index', 'range', 'limit'].filter((k) => config[k]).map((s) => `\`${s}\``);
-    const optsMsg = [opts.slice(0, -1).join(', '), opts[opts.length - 1]].join(' and ');
-    console.warn(`Redux Deep Diff: deducer options ${optsMsg} should not be combined`);
+    console.warn('index, range, or limit should not be combined');
   }
 
   const doChanges = next ? applyChanges : revertChanges;
@@ -21,7 +19,7 @@ export default function createDeducer(selector, config = {}) {
     let { [key]: history, ...state } = rawState;
 
     if (!history || !(history.prev && history.next)) {
-      throw new Error(`Redux Deep Diff: "${key}" is not a diff history object`);
+      throw new Error(`"${key}" is not a diff history object`);
     }
 
     let slice = next ? history.next : history.prev;
