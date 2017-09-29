@@ -13,28 +13,53 @@ export default function createDeducer(selector, config = {}) {
     console.warn('index, range, or limit should not be combined');
   }
 
-  const doChanges = next ? applyChanges : revertChanges;
+  let makeChanges = next ? applyChanges : revertChanges;
 
-  return (rawState, ...args) => {
+  let deducer = function deducer(rawState, ...args) {
     let { [key]: history, ...state } = rawState;
 
     if (!history || !(history.prev && history.next)) {
       throw new Error(`"${key}" is not a diff history object`);
     }
 
-    let slice = next ? history.next : history.prev;
+    let diffs = next ? history.next : history.prev;
 
-    if (index !== false) {
-      state = doChanges(state, slice[index]);
-      return selector(state, ...args);
-    } else if (range || limit) {
-      const [lower, upper] = range || [0, limit - 1];
-      slice = slice.slice(lower, upper + 1);
+    if (deducer.cache.self) {
+      let [cached, result] = deducer.cache.self;
+      if (diffs !== cached) return result;
     }
 
-    return slice.reduce((deduced, diff) => {
-      state = doChanges(state, diff);
-      return [...deduced, selector(state, ...args)];
-    }, []);
+    let length = diffs.length;
+    let [lower, upper] = range || [0, (limit || length) - 1];
+    lower = index !== false ? index : Math.max(lower, 0);
+    upper = index !== false ? index : Math.min(upper, length - 1);
+
+    let deduced = [];
+
+    for (let i = 0; i <= length; i++) {
+      makeChanges(state, diffs[i]);
+      if (i < lower || i > upper) continue;
+
+      let cacheId = i - length;
+      let [cached, result] = deducer.cache[cacheId] || [];
+
+      if (!cached || diffs[i] !== cached) {
+        result = selector(state, ...args);
+        deducer.cache[cacheId] = [diffs[i], result];
+      }
+
+      if (index === false) {
+        deduced.push(result);
+      } else if (i === index) {
+        return result;
+      }
+    }
+
+    deduced = index === false ? deduced : null;
+    deducer.cache.self = [diffs, deduced];
+    return deduced;
   };
+
+  deducer.cache = {};
+  return deducer;
 }
