@@ -49,7 +49,11 @@ export default function createDeducer(selector, config = {}) {
       }
 
       if (index === false) {
-        deduced.push(result);
+        if (next) {
+          deduced.push(result);
+        } else {
+          deduced.unshift(result);
+        }
       } else if (i === index) {
         return result;
       }
