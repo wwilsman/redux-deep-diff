@@ -120,6 +120,42 @@ describe('Redux Deep Diff: deducer', function() {
     });
   });
 
+  describe('memoization', function() {
+    beforeEach(function() {
+      this.spy = sinon.spy(selector);
+      this.deduce = createDeducer(this.spy);
+    });
+
+    it('should memoize the results', function() {
+      const history = this.deduce(this.state);
+      expect(this.spy).to.have.callCount(4);
+      expect(this.deduce(this.state)).to.equal(history);
+      expect(this.spy).to.have.callCount(4);
+    });
+
+    it('should memoize each selector result', function() {
+      const history = this.deduce(this.state);
+      expect(this.spy).to.have.callCount(4);
+
+      const newHistory = this.deduce({
+        number: 5,
+        diff: {
+          prev: [
+            [{ kind: 'E', path: ['number'], lhs: 5, rhs: 0 }],
+            ...this.state.diff.prev
+          ],
+          next: []
+        }
+      });
+
+      expect(newHistory).to.not.equal(history);
+      expect(newHistory).to.have.lengthOf(5);
+      expect(newHistory).to.include.members(history);
+      expect(newHistory[0]).to.equal(5);
+      expect(this.spy).to.have.callCount(5);
+    });
+  });
+
   describe('misconfigured options', function() {
     beforeEach(function() {
       this.sinon = sinon.sandbox.create();

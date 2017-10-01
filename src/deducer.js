@@ -26,7 +26,7 @@ export default function createDeducer(selector, config = {}) {
 
     if (deducer.cache.self) {
       let [cached, result] = deducer.cache.self;
-      if (diffs !== cached) return result;
+      if (diffs === cached) return result;
     }
 
     let length = diffs.length;
