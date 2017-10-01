@@ -8,6 +8,12 @@ import {
   revertDiffs
 } from './util';
 
+/**
+ * Immutably prepends a new diff to the history's previous diffs
+ * @param {Object} history - diff history
+ * @param {Array} addition - new diff
+ * @returns {Object} new diff history object
+ */
 function addToHistory(history, addition) {
   return addition.length === 0 ? history : {
     ...history,
@@ -17,6 +23,13 @@ function addToHistory(history, addition) {
   };
 }
 
+/**
+ * Immutably moves previous diff history to the next diff history, optionally by
+ * an offset
+ * @param {Object} history - diff history
+ * @param {Number} offset - amount of diffs to move
+ * @returns {Object} new diff history object
+ */
 function jumpToPrevHistory(history, offset = 1) {
   offset = Math.min(history.prev.length, offset);
 
@@ -28,6 +41,13 @@ function jumpToPrevHistory(history, offset = 1) {
   };
 }
 
+/**
+ * Immutably moves the next diff distory to the previous diff history,
+ * optionally by an offset
+ * @param {Object} history - diff history
+ * @param {Number} offset - amount of diffs to move
+ * @returns {Object} new diff history object
+ */
 function jumpToNextHistory(history, offset = 1) {
   offset = Math.min(history.next.length, offset);
 
@@ -39,17 +59,15 @@ function jumpToNextHistory(history, offset = 1) {
   };
 }
 
-function jumpThroughHistory(history, index) {
-  if (history && index < 0) {
-    return jumpToPrevHistory(history, Math.abs(index));
-  } else if (history && index > 0) {
-    return jumpToNextHistory(history, index);
-  } else {
-    return history;
-  }
-}
-
-export default (reducer, config = {}) => {
+/**
+ * Higher order reducer to track deep-diff states before and after each
+ * action. Additonally will undo or redo the state when specific actions are
+ * dispatched.
+ * @param {Function} reducer - redux reducer
+ * @param {Object} config - configuration object
+ * @returns {Function} reduc reducer with a diff history leaf
+ */
+export default function diff(reducer, config = {}) {
   const {
     key = 'diff',
     limit = 0,
@@ -63,6 +81,7 @@ export default (reducer, config = {}) => {
     prefilter = () => false
   } = config;
 
+  // this will accumulate and merge diffs until `accum.clear()` is called
   let accum = new DiffAccumulator({ flatten, prefilter });
 
   return (rawState, action) => {
@@ -78,34 +97,41 @@ export default (reducer, config = {}) => {
       case undoType:
         nextState = revertChanges(clone(lhs), history.prev[0]);
         history = jumpToPrevHistory(history);
-        return { ...nextState, [key]: history };
+        break;
 
       case redoType:
         nextState = applyChanges(clone(lhs), history.next[0]);
         history = jumpToNextHistory(history);
-        return { ...nextState, [key]: history };
+        break;
 
       case jumpType:
-        if (action.index > 0) {
-          diffs = history.next.slice(0, Math.abs(action.index));
-          nextState = applyDiffs(clone(lhs), diffs);
-        } else if (action.index < 0) {
+        // apply a subset of previous diffs
+        if (action.index < 0) {
           diffs = history.prev.slice(0, Math.abs(action.index));
           nextState = revertDiffs(clone(lhs), diffs);
+          history = jumpToPrevHistory(history, Math.abs(action.index));
+
+        // apply a subset of futer diffs
+        } else if (action.index > 0) {
+          diffs = history.next.slice(0, Math.abs(action.index));
+          nextState = applyDiffs(clone(lhs), diffs);
+          history = jumpToNextHistory(history, action.index);
         }
 
-        history = jumpThroughHistory(history, action.index);
-        return { ...nextState, [key]: history };
+        break;
 
       default:
+        // when `rawState` is undefined, chances are this is the very first time
+        // this reduce has been called. We ignore this initial call by default,
+        // otherwise it will generate a diff for each leaf in the entire state.
         changes = (rawState || !ignoreInit) ? accum.diff(lhs, rhs) : [];
 
         if (!skipAction(action)) {
           history = addToHistory(history, changes);
           accum.clear();
         }
-
-        return { ...nextState, [key]: history };
     }
+
+    return { ...nextState, [key]: history };
   };
 };

@@ -1,2 +1,3 @@
 export * from './actions';
-export { default as diff } from './reducer';
+export { default as createDeducer } from './deducer';
+export { default } from './reducer';
