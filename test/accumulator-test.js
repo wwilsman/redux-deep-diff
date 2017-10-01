@@ -18,7 +18,7 @@ describe('Redux Deep Diff: accumulator', function() {
       const rhs = { string: 'world', number: 1 };
       const diffs = accum.diff(lhs, rhs);
 
-      expect(accum.diffs).to.equal(diffs);
+      expect(accum.changes).to.equal(diffs);
       expect(diffs).to.have.lengthOf(2);
       expect(diffs[0]).to.be.diff('E', ['string'], 'hello', 'world');
       expect(diffs[1]).to.be.diff('E', ['number'], 0, 1);
@@ -29,7 +29,7 @@ describe('Redux Deep Diff: accumulator', function() {
       const second = { string: 'world', array: ['A', 'b'] };
       const diffs = accum.diff(first, second);
 
-      expect(accum.diffs).to.equal(diffs);
+      expect(accum.changes).to.equal(diffs);
       expect(diffs).to.have.lengthOf(4);
       expect(diffs[0]).to.be.diff('E', ['string'], 'hello', 'world');
       expect(diffs[1]).to.be.diff('D', ['number'], 0, undefined);
@@ -39,7 +39,7 @@ describe('Redux Deep Diff: accumulator', function() {
       const third = { string: 'people', number: 0, array: [] };
       const otherDiffs = accum.diff(second, third);
 
-      expect(accum.diffs).to.equal(otherDiffs);
+      expect(accum.changes).to.equal(otherDiffs);
       expect(otherDiffs).to.have.lengthOf(2);
       expect(otherDiffs[0]).to.be.diff('E', ['string'], 'hello', 'people');
       expect(otherDiffs[1]).to.be.diff('A', ['array'], 0, { kind: 'D', lhs: 'a' });
@@ -55,7 +55,7 @@ describe('Redux Deep Diff: accumulator', function() {
       expect(diffs[1]).to.be.diff('A', ['array'], 0, { kind: 'N', rhs: 'a' });
 
       accum.clear();
-      expect(accum.diffs).to.have.lengthOf(0);
+      expect(accum.changes).to.have.lengthOf(0);
 
       const other = { string: 'lady', array: [] };
       const otherDiffs = accum.diff(lhs, other);

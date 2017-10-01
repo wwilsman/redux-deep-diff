@@ -12,12 +12,12 @@ function getSubjectAtPath(target, path) {
     ), target);
 }
 
-function mergeDiffs(a, b) {
+function mergeChanges(a, b) {
   let merged = {};
 
   if (a.lhs !== b.rhs) {
     if (a.kind === 'A' || b.kind === 'A') {
-      let item = mergeDiffs(
+      let item = mergeChanges(
         a.kind === 'A' ? a.item : { kind: a.kind, lhs: a.lhs },
         b.kind === 'A' ? b.item : { kind: b.kind, rhs: b.rhs }
       );
@@ -41,7 +41,7 @@ function mergeDiffs(a, b) {
 
 export default class DiffAccumulator {
   flattened = [];
-  diffs = [];
+  changes = [];
   lhs = null;
   rhs = null;
 
@@ -65,25 +65,25 @@ export default class DiffAccumulator {
     this.rhs = rhs;
 
     diff(lhs, rhs, this.prefilter, this);
-    return this.diffs;
+    return this.changes;
   }
 
   clear() {
-    this.diffs = [];
+    this.changes = [];
   }
 
-  getFlatPath(diff) {
+  getFlatPath(change) {
     let index = -1;
 
     if (this.opts.flatten) {
-      index = diff.path.findIndex((key, i, path) => {
+      index = change.path.findIndex((key, i, path) => {
         return this.opts.flatten(path.slice(0, i), key);
       });
     }
 
     return index >= 0
-      ? diff.path.slice(0, index + 1)
-      : diff.path;
+      ? change.path.slice(0, index + 1)
+      : change.path;
   }
 
   isFlattened(path) {
@@ -92,41 +92,43 @@ export default class DiffAccumulator {
     });
   }
 
-  addDiff(diff) {
-    let existingIndex = this.diffs.findIndex((d) => {
-      let pathA = diff.kind === 'A' ? [...diff.path, diff.index] : diff.path;
-      let pathB = d.kind === 'A' ? [...d.path, d.index] : d.path;
+  addChange(change) {
+    let existingIndex = this.changes.findIndex((c) => {
+      let pathA = change.kind === 'A' ? [...change.path, change.index] : change.path;
+      let pathB = c.kind === 'A' ? [...c.path, c.index] : c.path;
       return isPathsEqual(pathA, pathB);
     });
 
-    if (diff.item) {
-      diff.item = { ...diff.item };
+    if (change.item) {
+      change = { ...change, item: { ...change.item } };
+    } else {
+      change = { ...change };
     }
 
     if (existingIndex > -1) {
-      let merged = mergeDiffs(this.diffs[existingIndex], diff);
+      let merged = mergeChanges(this.changes[existingIndex], change);
 
       if (merged && !merged.kind) {
-        this.diffs.splice(existingIndex, 1);
+        this.changes.splice(existingIndex, 1);
       } else if (merged) {
-        this.diffs.splice(existingIndex, 1, merged);
+        this.changes.splice(existingIndex, 1, merged);
       }
     } else {
-      this.diffs.push(diff);
+      this.changes.push(change);
     }
   }
 
-  push(diff) {
-    let flatPath = this.getFlatPath(diff);
+  push(change) {
+    let flatPath = this.getFlatPath(change);
     if (this.isFlattened(flatPath)) return;
 
-    if (diff.kind !== 'A' && !isPathsEqual(flatPath, diff.path)) {
+    if (change.kind !== 'A' && !isPathsEqual(flatPath, change.path)) {
       const lhs = getSubjectAtPath(this.lhs, flatPath);
       const rhs = getSubjectAtPath(this.rhs, flatPath);
-      this.addDiff({ kind: 'E', path: flatPath, lhs, rhs });
+      this.addChange({ kind: 'E', path: flatPath, lhs, rhs });
       this.flattened.push(flatPath);
     } else {
-      this.addDiff({ ...diff });
+      this.addChange(change);
     }
   }
 }
