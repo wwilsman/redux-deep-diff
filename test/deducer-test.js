@@ -16,6 +16,7 @@ describe('Redux Deep Diff: deducer', function() {
         prev: [
           [{ kind: 'E', path: ['number'], lhs: 10, rhs: 0 }],
           [{ kind: 'E', path: ['number'], lhs: 15, rhs: 10 }],
+          [{ kind: 'D', path: ['boolean'], lhs: true }],
           [{ kind: 'E', path: ['number'], lhs: 5, rhs: 15 }],
           [{ kind: 'E', path: ['number'], lhs: 0, rhs: 5 }]
         ],
@@ -31,14 +32,14 @@ describe('Redux Deep Diff: deducer', function() {
 
     it('should deduce the correct history', function() {
       const history = this.deduce(this.state);
-      expect(history).to.have.lengthOf(4);
-      expect(history).to.deep.equal([0, 5, 15, 10]);
+      expect(history).to.have.lengthOf(5);
+      expect(history).to.deep.equal([0, 5, 15, 15, 10]);
     });
   });
 
   describe('with the `index` option', function() {
     beforeEach(function() {
-      this.deduce = createDeducer(selector, { index: 2 });
+      this.deduce = createDeducer(selector, { index: 3 });
     });
 
     it('should deduce a single diff from the history', function() {
@@ -49,7 +50,7 @@ describe('Redux Deep Diff: deducer', function() {
 
   describe('with the `range` option', function() {
     beforeEach(function() {
-      this.deduce = createDeducer(selector, { range: [1, 2] });
+      this.deduce = createDeducer(selector, { range: [2, 3] });
     });
 
     it('should deduce a subset of the history', function() {
@@ -71,6 +72,18 @@ describe('Redux Deep Diff: deducer', function() {
     });
   });
 
+  describe('with the `unique` option', function() {
+    beforeEach(function() {
+      this.deduce = createDeducer(selector, { unique: true });
+    });
+
+    it('should not return equal results that follow each other', function() {
+      const history = this.deduce(this.state);
+      expect(history).to.have.lengthOf(4);
+      expect(history).to.deep.equal([0, 5, 15, 10]);
+    });
+  });
+
   describe('with the `next` option', function() {
     beforeEach(function() {
       this.deduce = createDeducer(selector, { next: true });
@@ -80,13 +93,13 @@ describe('Redux Deep Diff: deducer', function() {
 
     it('should deduce the correct history', function() {
       const history = this.deduce(this.state);
-      expect(history).to.have.lengthOf(4);
-      expect(history).to.deep.equal([0, 10, 15, 5]);
+      expect(history).to.have.lengthOf(5);
+      expect(history).to.deep.equal([5, 15, 15, 10, 0]);
     });
 
     describe('and the `index` option', function() {
       beforeEach(function() {
-        this.deduce = createDeducer(selector, { next: true, index: 2 });
+        this.deduce = createDeducer(selector, { next: true, index: 3 });
       });
 
       it('should deduce a single diff from the history', function() {
@@ -97,13 +110,13 @@ describe('Redux Deep Diff: deducer', function() {
 
     describe('and the `range` option', function() {
       beforeEach(function() {
-        this.deduce = createDeducer(selector, { next: true, range: [1, 2] });
+        this.deduce = createDeducer(selector, { next: true, range: [2, 3] });
       });
 
       it('should deduce a subset of the history', function() {
         const history = this.deduce(this.state);
         expect(history).to.have.lengthOf(2);
-        expect(history).to.deep.equal([10, 15]);
+        expect(history).to.deep.equal([15, 10]);
       });
     });
 
@@ -115,7 +128,19 @@ describe('Redux Deep Diff: deducer', function() {
       it('should deduce a limited history', function() {
         const history = this.deduce(this.state);
         expect(history).to.have.lengthOf(2);
-        expect(history).to.deep.equal([15, 5]);
+        expect(history).to.deep.equal([5, 15]);
+      });
+    });
+
+    describe('and the `unique` option', function() {
+      beforeEach(function() {
+        this.deduce = createDeducer(selector, { next: true, unique: true });
+      });
+
+      it('should not return equal results that follow each other', function() {
+        const history = this.deduce(this.state);
+        expect(history).to.have.lengthOf(4);
+        expect(history).to.deep.equal([5, 15, 10, 0]);
       });
     });
   });
@@ -128,14 +153,14 @@ describe('Redux Deep Diff: deducer', function() {
 
     it('should memoize the results', function() {
       const history = this.deduce(this.state);
-      expect(this.spy).to.have.callCount(4);
+      expect(this.spy).to.have.callCount(5);
       expect(this.deduce(this.state)).to.equal(history);
-      expect(this.spy).to.have.callCount(4);
+      expect(this.spy).to.have.callCount(5);
     });
 
     it('should memoize each selector result', function() {
       const history = this.deduce(this.state);
-      expect(this.spy).to.have.callCount(4);
+      expect(this.spy).to.have.callCount(5);
 
       const newHistory = this.deduce({
         number: 5,
@@ -149,10 +174,10 @@ describe('Redux Deep Diff: deducer', function() {
       });
 
       expect(newHistory).to.not.equal(history);
-      expect(newHistory).to.have.lengthOf(5);
+      expect(newHistory).to.have.lengthOf(6);
       expect(newHistory).to.include.members(history);
-      expect(newHistory[4]).to.equal(5);
-      expect(this.spy).to.have.callCount(5);
+      expect(newHistory[5]).to.equal(5);
+      expect(this.spy).to.have.callCount(6);
     });
   });
 
@@ -179,7 +204,7 @@ describe('Redux Deep Diff: deducer', function() {
     describe('with both an `index` and `range` or `limit`', function() {
       beforeEach(function() {
         const index = 1;
-        const range = [1, 2];
+        const range = [2, 3];
         const limit = 2;
         this.deduceIndexed = createDeducer(selector, { index });
         this.deduceRanged = createDeducer(selector, { index, range });
@@ -197,7 +222,7 @@ describe('Redux Deep Diff: deducer', function() {
         expect(indexed).to.equal(15);
 
         const ranged = this.deduceRanged(this.state);
-        expect(ranged).to.not.deep.equal([10, 15]);
+        expect(ranged).to.not.deep.equal([15, 10]);
         expect(ranged).to.equal(indexed);
 
         const limited = this.deduceLimited(this.state);
@@ -205,7 +230,7 @@ describe('Redux Deep Diff: deducer', function() {
         expect(limited).to.equal(indexed);
 
         const rangeLimited = this.deduceRangeLimited(this.state);
-        expect(rangeLimited).to.not.deep.equal([10, 15]);
+        expect(rangeLimited).to.not.deep.equal([15, 10]);
         expect(rangeLimited).to.not.deep.equal([15, 5]);
         expect(rangeLimited).to.equal(indexed);
       });
@@ -213,7 +238,7 @@ describe('Redux Deep Diff: deducer', function() {
 
     describe('with both a `range` and `limit`', function() {
       beforeEach(function() {
-        const range = [1, 2];
+        const range = [2, 3];
         const limit = 2;
         this.deduceRanged = createDeducer(selector, { range });
         this.deduceRangeLimited = createDeducer(selector, { range, limit });
@@ -226,7 +251,7 @@ describe('Redux Deep Diff: deducer', function() {
 
       it('should prioritize `range`', function() {
         const ranged = this.deduceRanged(this.state);
-        expect(ranged).to.not.deep.equal([10, 15]);
+        expect(ranged).to.not.deep.equal([15, 10]);
         expect(ranged).to.deep.equal([5, 15]);
 
         const rangeLimited = this.deduceRangeLimited(this.state);

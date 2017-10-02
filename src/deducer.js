@@ -12,6 +12,7 @@ export default function createDeducer(selector, config = {}) {
   const {
     key = 'diff',
     next = false,
+    unique = false,
     index = false,
     range = false,
     limit = false
@@ -71,6 +72,12 @@ export default function createDeducer(selector, config = {}) {
       if (!cached || diffs[i] !== cached) {
         result = selector(state, ...args);
         deducer.cache[cacheId] = [diffs[i], result];
+      }
+
+      // skip results that follow each other
+      if (unique) {
+        let last = next ? deduced[deduced.length - 1] : deduced[0];
+        if (result === last) continue;
       }
 
       // push, unshift, or return the deduced result

@@ -151,11 +151,12 @@ expect(change.rhs).to.deep.equal({ some: 'property' });
 
 ``` javascript
 {
-  key: 'diff',  // key to retrieve the state diffs
-  next: false,  // deduce from `diff.next` when `true` (future history)
-  index: false, // the index of a single state in the history to deduce
-  range: false, // a range of history states to deduce - `[lower, upper]`
-  limit: false  // limit the deducer to a specified length
+  key: 'diff',   // key to retrieve the state diffs
+  next: false,   // deduce from `diff.next` when `true` (future history)
+  unique: false, // skip equal results that immediately follow each other
+  index: false,  // the index of a single state in the history to deduce
+  range: false,  // a range of history states to deduce - `[lower, upper]`
+  limit: false   // limit the deducer to a specified length
 }
 ```
 
