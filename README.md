@@ -1,8 +1,10 @@
 # Redux Deep Diff
 [![Build Status](https://travis-ci.org/wwilsman/redux-deep-diff.svg?branch=master)](https://travis-ci.org/wwilsman/redux-deep-diff)
 
-[deep-diff](https://github.com/flitbit/diff) for observing structural
+[deep-diff](https://github.com/flitbit/diff) for tracking structural
 differences between objects in redux state containers
+
+Also with undo/redo functionality!
 
 ## Installation
 
@@ -54,6 +56,21 @@ Wrapping your reducer with `diff` adds a diff leaf to your state:
 Each diff in the history is an array of changes. See
 [deep-diff's differences documentation](https://github.com/flitbit/diff#differences)
 for more info on change records.
+
+### Dispatching `undo` & `redo` actions
+
+Since `redux-deep-diff` _tracks_ changes to your state, you can undo & redo
+the diffs in your history.
+
+``` javascript
+import { undo, redo, jump } from 'redux-deep-diff';
+
+store.dispatch(undo()); // revert the previous diff
+store.dispatch(redo()); // apply the next diff
+
+store.dispatch(jump(-3)); // revert the previous three diffs
+store.dispatch(jump(2)); // apply the next two diffs
+```
 
 ### Deducing state history
 
