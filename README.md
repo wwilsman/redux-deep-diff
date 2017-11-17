@@ -106,7 +106,7 @@ store.dispatch(increment());
 store.dispatch(decrement());
 
 let b = getCountHistory(store.getState());
-//=> [0, 1, 2, 3, 2] `countSelector` was called two more times
+//=> [0, 1, 2, 3, 2] `countSelector` was called three more times
 
 // true even for values of objects/arrays
 expect(a[0]).to.equal(b[0]);

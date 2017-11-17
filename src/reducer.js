@@ -111,7 +111,7 @@ export default function diff(reducer, config = {}) {
           nextState = revertDiffs(clone(lhs), diffs);
           history = jumpToPrevHistory(history, Math.abs(action.index));
 
-        // apply a subset of futer diffs
+        // apply a subset of future diffs
         } else if (action.index > 0) {
           diffs = history.next.slice(0, Math.abs(action.index));
           nextState = applyDiffs(clone(lhs), diffs);
