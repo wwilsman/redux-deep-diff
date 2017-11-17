@@ -1,4 +1,5 @@
 # Redux Deep Diff
+[![npm version](https://badge.fury.io/js/redux-deep-diff.svg)](https://www.npmjs.com/package/redux-deep-diff)
 [![Build Status](https://travis-ci.org/wwilsman/redux-deep-diff.svg?branch=master)](https://travis-ci.org/wwilsman/redux-deep-diff)
 
 [deep-diff](https://github.com/flitbit/diff) for tracking structural
