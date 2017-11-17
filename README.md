@@ -29,7 +29,7 @@ reducer(s) like so:
 import { combineReducers } from 'redux';
 
 // redux-deep-diff higher-order reducer
-import diff from 'redux-undo';
+import diff from 'redux-deep-diff';
 
 // `counter` state must be a diffable object
 // e.i. state.counter = { count: 1 }
