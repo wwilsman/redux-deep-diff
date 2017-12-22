@@ -1,0 +1,80 @@
+references:
+  job_defaults: &defaults
+    working_directory: ~/redux-deep-diff
+    docker:
+      - image: circleci/node:8
+
+  cache_key: &cache_key
+    rdd-{{ .Branch }}-{{ checksum "yarn.lock" }}
+
+  restore_cache: &restore_cache
+    restore_cache:
+      name: Restore yarn cache
+      key: *cache_key
+
+version: 2.0
+jobs:
+  install:
+    <<: *defaults
+    steps:
+      - checkout
+      - *restore_cache
+      - run:
+          name: Install dependencies
+          command: yarn install
+      - save_cache:
+          name: Save yarn cache
+          key: *cache_key
+          paths: node_modules
+  test:
+    <<: *defaults
+    steps:
+      - checkout
+      - *restore_cache
+      - run:
+          name: Lint
+          command: yarn lint
+      - run:
+          name: Run tests
+          command: yarn test
+  build:
+    <<: *defaults
+    steps:
+      - checkout
+      - *restore_cache
+      - run:
+          name: Build
+          command: yarn build
+      - persist_to_workspace:
+          root: .
+          paths:
+            - es
+            - lib
+            - dist
+  deploy:
+    <<: *defaults
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/redux-deep-diff
+      - run:
+          name: Setup NPM
+          command: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
+      - run:
+          name: Who am I?
+          command: npm whoami
+workflows:
+  version: 2
+  master:
+    jobs:
+      - install
+      - test:
+          requires:
+            - install
+      - build:
+          requires:
+            - install
+      - deploy:
+          requires:
+            - test
+            - build
