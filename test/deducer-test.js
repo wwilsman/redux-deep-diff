@@ -12,11 +12,15 @@ describe('Redux Deep Diff: deducer', function() {
   beforeEach(function() {
     this.state = {
       number: 0,
+      nested: {
+        string: 'hello'
+      },
       diff: {
         prev: [
           [{ kind: 'E', path: ['number'], lhs: 10, rhs: 0 }],
           [{ kind: 'E', path: ['number'], lhs: 15, rhs: 10 }],
-          [{ kind: 'D', path: ['boolean'], lhs: true }],
+          [{ kind: 'D', path: ['boolean'], lhs: true },
+            { kind: 'N', path: ['nested', 'string'], rhs: 'hello' }],
           [{ kind: 'E', path: ['number'], lhs: 5, rhs: 15 }],
           [{ kind: 'E', path: ['number'], lhs: 0, rhs: 5 }]
         ],
@@ -34,6 +38,11 @@ describe('Redux Deep Diff: deducer', function() {
       const history = this.deduce(this.state);
       expect(history).to.have.lengthOf(5);
       expect(history).to.deep.equal([0, 5, 15, 15, 10]);
+    });
+
+    it('should not modify nested state', function() {
+      this.deduce(this.state);
+      expect(this.state.nested).to.have.property('string', 'hello');
     });
   });
 

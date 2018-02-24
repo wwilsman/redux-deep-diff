@@ -1,3 +1,4 @@
+import clone from 'clone-deep';
 import { applyChanges, revertChanges } from './util';
 
 /**
@@ -34,6 +35,9 @@ export default function createDeducer(selector, config = {}) {
    */
   let deducer = function deducer(rawState, ...args) {
     let { [key]: history, ...state } = rawState;
+
+    // ensure we don't modify state while dealing with changes
+    state = clone(state);
 
     if (!history || !(history.prev && history.next)) {
       throw new Error(`"${key}" is not a diff history object`);
