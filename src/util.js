@@ -1,4 +1,5 @@
-import { applyChange, revertChange } from 'deep-diff';
+import deepDiff from 'deep-diff';
+const { applyChange, revertChange } = deepDiff;
 
 /**
  * Calls `applyChange` or `revertChange` on the target object for

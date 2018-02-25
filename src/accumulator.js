@@ -1,4 +1,5 @@
-import { diff } from 'deep-diff';
+import deepDiff from 'deep-diff';
+const { diff } = deepDiff;
 
 /**
  * Returns true when two arrays of keys are equal

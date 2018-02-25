@@ -3,7 +3,7 @@
   "version": "0.4.4",
   "description": "Higher order reducer to deep diff redux states",
   "main": "lib/index.js",
-  "module": "es/index.js",
+  "module": "src/index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/wwilsman/redux-deep-diff.git"
@@ -12,24 +12,18 @@
   "license": "MIT",
   "scripts": {
     "prebuild": "yarn clean",
-    "build": "npm-run-all --parallel build:*",
-    "build:commonjs": "cross-env BABEL_ENV=commonjs babel src --out-dir lib",
-    "build:es": "cross-env BABEL_ENV=es babel src --out-dir es",
-    "build:umd": "cross-env BABEL_ENV=commonjs NODE_ENV=development webpack",
-    "build:umd:min": "cross-env BABEL_ENV=commonjs NODE_ENV=production webpack",
-    "clean": "rimraf lib dist es",
-    "lint": "eslint webpack.config.babel.js src test",
-    "test": "cross-env NODE_ENV=test mocha --compilers js:babel-core/register"
+    "build": "rollup --config",
+    "clean": "rimraf dist",
+    "lint": "eslint rollup.config.js src test",
+    "test": "mocha ./test"
   },
   "devDependencies": {
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.0",
-    "babel-eslint": "^7.2.3",
-    "babel-loader": "^7.1.2",
-    "babel-preset-env": "^1.6.0",
-    "babel-preset-stage-2": "^6.24.1",
+    "@babel/core": "^7.0.0-beta.40",
+    "@babel/preset-env": "^7.0.0-beta.40",
+    "@babel/preset-stage-2": "^7.0.0-beta.40",
+    "@babel/register": "^7.0.0-beta.40",
+    "babel-eslint": "^8.2.2",
     "chai": "^4.1.2",
-    "cross-env": "^5.0.5",
     "dirty-chai": "^2.0.1",
     "eslint": "^4.6.1",
     "eslint-config-standard": "^10.2.1",
@@ -37,13 +31,15 @@
     "eslint-plugin-node": "^5.1.1",
     "eslint-plugin-promise": "^3.5.0",
     "eslint-plugin-standard": "^3.0.1",
-    "mocha": "^3.5.0",
-    "npm-run-all": "^4.1.1",
+    "mocha": "^4.0.1",
     "redux": "^3.7.2",
     "rimraf": "^2.6.1",
+    "rollup": "^0.56.2",
+    "rollup-plugin-babel": "^4.0.0-beta.0",
+    "rollup-plugin-commonjs": "^8.3.0",
+    "rollup-plugin-node-resolve": "^3.0.3",
     "sinon": "^3.3.0",
-    "sinon-chai": "^2.13.0",
-    "webpack": "^3.5.6"
+    "sinon-chai": "^2.13.0"
   },
   "dependencies": {
     "clone-deep": "^1.0.0",
