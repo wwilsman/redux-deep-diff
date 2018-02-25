@@ -5,7 +5,7 @@ import babel from 'rollup-plugin-babel';
 export default {
   input: './src/index',
   output: {
-    file: './dist/redux-deep-diff.js',
+    file: './dist/index.js',
     format: 'umd',
     exports: 'named',
     name: 'ReduxDeepDiff'
