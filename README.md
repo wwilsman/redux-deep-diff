@@ -73,6 +73,14 @@ store.dispatch(jump(-3)); // revert the previous three diffs
 store.dispatch(jump(2)); // apply the next two diffs
 ```
 
+### Dispatching `clear` action
+
+``` javascript
+import { clear } from 'redux-deep-diff';
+
+store.dispatch(clear()); // clear the history
+```
+
 ### Deducing state history
 
 To access previous values of the state, `redux-deep-diff` has a concept of
@@ -135,6 +143,7 @@ Default values for the supported options are listed below
   undoType: '@@redux-deep-diff/UNDO',   // custom undo action type
   redoType: '@@redux-deep-diff/REDO',   // custom redo action type
   jumpType: '@@redux-deep-diff/JUMP',   // custom jump action type
+  clearType: '@@redux-deep-diff/CLEAR',   // custom clear action type
   skipAction: (action) => false,        // return true to skip diffing the state for this action
   initialState: { prev: [], next: [] }, // initial diff history state
   ignoreInit: true,                     // includes the first state when `false`
