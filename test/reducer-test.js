@@ -4,7 +4,7 @@ import { chaiDeepDiff } from './util';
 import { createStore } from 'redux';
 
 import diff from '../src/reducer';
-import { UNDO, REDO, JUMP } from '../src/actions';
+import { UNDO, REDO, JUMP, CLEAR } from '../src/actions';
 
 use(dirtyChai);
 use(chaiDeepDiff);
@@ -14,11 +14,13 @@ describeDiffReducer('with a custom key', { key: 'd' });
 describeDiffReducer('with a custom undo type', { undoType: 'PREV_DIFF' });
 describeDiffReducer('with a custom redo type', { redoType: 'NEXT_DIFF' });
 describeDiffReducer('with a custom jump type', { jumpType: 'JUMP_TO_DIFF' });
+describeDiffReducer('with a custom clear type', { clearType: 'CLEAR_DIFF' });
 describeDiffReducer('with custom combination key & types', {
   key: '__secret_diff',
   undoType: 'GET_UNDONE',
   redoType: 'GET_REDONE',
-  jumpType: 'GET_JUMPED'
+  jumpType: 'GET_JUMPED',
+  clearType: 'GET_CLEARED'
 });
 
 // we want to perform the same tests with varying reducer configs
@@ -27,7 +29,8 @@ function describeDiffReducer(label = '', testConfig = {}) {
     key = 'diff',
     undoType = UNDO,
     redoType = REDO,
-    jumpType = JUMP
+    jumpType = JUMP,
+    clearType = CLEAR
   } = testConfig;
 
   const initialState = {
@@ -62,6 +65,7 @@ function describeDiffReducer(label = '', testConfig = {}) {
       this.dispatch.undo = () => this.store.dispatch({ type: undoType });
       this.dispatch.redo = () => this.store.dispatch({ type: redoType });
       this.dispatch.jump = (index) => this.store.dispatch({ type: jumpType, index });
+      this.dispatch.clear = (index) => this.store.dispatch({ type: clearType, index });
 
       this.unsubscribe = this.store.subscribe(() => {
         this.state = this.store.getState();
@@ -203,6 +207,19 @@ function describeDiffReducer(label = '', testConfig = {}) {
           const pre = this.state;
           this.dispatch.redo();
           expect(this.state).to.deep.equal(pre);
+        });
+      });
+
+      describe('a clear action', function() {
+        it('should clear history', function() {
+          this.dispatch.setState({ number: 1 });
+          expect(this.state.number).to.equal(1);
+          expect(this.diff.prev).to.have.lengthOf(1);
+
+          this.dispatch.clear();
+          expect(this.state.number).to.equal(1);
+          expect(this.diff.prev).to.have.lengthOf(0);
+          expect(this.diff.next).to.have.lengthOf(0);
         });
       });
 

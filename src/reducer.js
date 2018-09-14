@@ -1,6 +1,6 @@
 import clone from 'clone-deep';
 import DiffAccumulator from './accumulator';
-import { UNDO, REDO, JUMP } from './actions';
+import { UNDO, REDO, JUMP, CLEAR } from './actions';
 import {
   applyChanges,
   applyDiffs,
@@ -74,6 +74,7 @@ export default function diff(reducer, config = {}) {
     undoType = UNDO,
     redoType = REDO,
     jumpType = JUMP,
+    clearType = CLEAR,
     skipAction = () => false,
     initialState = { prev: [], next: [] },
     ignoreInit = true,
@@ -118,6 +119,11 @@ export default function diff(reducer, config = {}) {
           history = jumpToNextHistory(history, action.index);
         }
 
+        break;
+
+      case clearType:
+        history = { ...initialState, limit };
+        accum.clear();
         break;
 
       default:
