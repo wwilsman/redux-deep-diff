@@ -1,6 +1,6 @@
 {
   "name": "redux-deep-diff",
-  "version": "0.4.7",
+  "version": "0.5.0",
   "description": "Higher order reducer to deep diff redux states",
   "main": "dist/index.js",
   "repository": {
